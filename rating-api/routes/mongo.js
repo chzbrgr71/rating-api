@@ -11,7 +11,37 @@ router.get('/', function(req, res, next) {
   res.json(response).status(response.status);
 });
 
-/* GET All Heroes*/
+/* GET heroes rated */
+router.get('/heroes/rated', function(req, res, next) {
+  Rate.aggregate(
+  [
+  {
+    $group: {
+      _id: '$heroRated', 
+      AvgRating: { $avg: '$rating' }
+    }
+  },
+  {
+    $lookup: {
+        "from": 'heroes', 
+        "localField": '_id', 
+        "foreignField": '_id', 
+        "as": 'Hero' 
+    }
+  }], 
+  function(err, results){
+    if(err) {
+      console.log(err);
+      next(err);
+    }
+    else {
+      var response = new jsonResponse('ok', 200, results);
+      res.json(response).status(response.status);
+    }
+  });
+});
+
+/* GET heroes */
 router.get('/heroes', function(req, res, next) {
   Hero.find({}).then(function(heroes){
     var response = new jsonResponse('ok', 200, heroes);
@@ -48,7 +78,5 @@ router.post('/rate', function(req, res, next){
   var response = new jsonResponse('ok', 200, ratings);
   res.json(response).status(response.status);
 });
-
-
 
 module.exports = router;
