@@ -12,11 +12,14 @@ events.on("push", (brigadeEvent, project) => {
     brigConfig.set("gitSHA", brigadeEvent.commit.substr(0,7))
     brigConfig.set("eventType", brigadeEvent.type)
     brigConfig.set("branch", getBranch(gitPayload))
+    var today = new Date()
+    brigConfig.set("buildDate", today.toISOString().substring(0, 10))
     brigConfig.set("imageTag", `${brigConfig.get("branch")}-${brigConfig.get("gitSHA")}`)
     brigConfig.set("apiACRImage", `${brigConfig.get("acrServer")}/${brigConfig.get("apiImage")}`)
     
     console.log(`==> gitHub webook (${brigConfig.get("branch")}) with commit ID ${brigConfig.get("gitSHA")}`)
-    
+    console.log(`==> Date ${brigConfig.get("buildDate")}`)
+
     // setup brigade jobs
     var docker = new Job("job-runner-docker")
     var helm = new Job("job-runner-helm")
@@ -43,7 +46,7 @@ events.on("after", (event, proj) => {
     slack.env = {
       SLACK_WEBHOOK: proj.secrets.slackWebhook,
       SLACK_USERNAME: "brigade-demo",
-      SLACK_MESSAGE: "brigade pipeline finished successfully",
+      SLACK_MESSAGE: "brigade pipeline finished. heroes api updated",
       SLACK_COLOR: "#ff0000"
     }
 	slack.run()
@@ -59,7 +62,7 @@ function dockerJobRunner(config, d) {
         "echo waiting && sleep 20",
         "cd /src/",
         `docker login ${config.get("acrServer")} -u ${config.get("acrUsername")} -p ${config.get("acrPassword")}`,
-        `docker build --build-arg BUILD_DATE='1/1/2017 5:00' --build-arg IMAGE_TAG_REF=${config.get("imageTag")} --build-arg VCS_REF=${config.get("gitSHA")} -t ${config.get("apiImage")} .`,
+        `docker build --build-arg BUILD_DATE=${config.get("buildDate")} --build-arg IMAGE_TAG_REF=${config.get("imageTag")} --build-arg VCS_REF=${config.get("gitSHA")} -t ${config.get("apiImage")} .`,
         `docker tag ${config.get("apiImage")} ${config.get("apiACRImage")}:${config.get("imageTag")}`,
         `docker push ${config.get("apiACRImage")}:${config.get("imageTag")}`,
         "killall dockerd"
@@ -73,7 +76,7 @@ function helmJobRunner (config, h, deployType) {
         "cd /src/",
         "git clone https://github.com/chzbrgr71/rating-charts.git",
         "cd rating-charts",
-        `helm upgrade --install rating-api ./rating-api --set api.image=${config.get("apiACRImage")} --set api.imageTag=${config.get("imageTag")}`
+        `helm upgrade --install api ./rating-api --set api.image=${config.get("apiACRImage")} --set api.imageTag=${config.get("imageTag")}`
     ]
 }
 
