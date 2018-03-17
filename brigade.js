@@ -46,7 +46,7 @@ events.on("after", (event, proj) => {
     slack.env = {
       SLACK_WEBHOOK: proj.secrets.slackWebhook,
       SLACK_USERNAME: "brigade-demo",
-      SLACK_MESSAGE: "brigade pipeline finished. heroes api updated",
+      SLACK_MESSAGE: "brigade pipeline finished. heroes API updated",
       SLACK_COLOR: "#ff0000"
     }
 	slack.run()
