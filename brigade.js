@@ -9,7 +9,7 @@ events.on("push", (brigadeEvent, project) => {
     brigConfig.set("acrUsername", project.secrets.acrUsername)
     brigConfig.set("acrPassword", project.secrets.acrPassword)
     brigConfig.set("apiImage", "chzbrgr71/rating-api")
-    brigConfig.set("gitSHA", brigadeEvent.commit.substr(0,7))
+    brigConfig.set("gitSHA", brigadeEvent.revision.commit.substr(0,7))
     brigConfig.set("eventType", brigadeEvent.type)
     brigConfig.set("branch", getBranch(gitPayload))
     var today = new Date()
@@ -46,7 +46,7 @@ events.on("after", (event, proj) => {
     slack.env = {
       SLACK_WEBHOOK: proj.secrets.slackWebhook,
       SLACK_USERNAME: "brigade-demo",
-      SLACK_MESSAGE: "brigade pipeline finished. heroes api updated",
+      SLACK_MESSAGE: "brigade pipeline finished. heroes API updated",
       SLACK_COLOR: "#ff0000"
     }
 	slack.run()

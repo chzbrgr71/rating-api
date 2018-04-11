@@ -14,3 +14,4 @@ secrets:
   acrUsername: <change this>
   acrPassword: "<change this>"
   slackWebhook: "<change this>"
+vcsSidecar: "deis/git-sidecar:v0.11.0"
