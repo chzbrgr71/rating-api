@@ -9,7 +9,7 @@ var Site = mongoose.model("Site");
 
 /* Default GET JSON for Mongo API */
 router.get("/", function(req, res, next) {
-  var response = new jsonResponse("Default /api endpoint for rating-api", 200, []);
+  var response = new jsonResponse("Default /api endpoint for Rating-api", 200, []);
   res.json(response).status(response.status);
 });
 
