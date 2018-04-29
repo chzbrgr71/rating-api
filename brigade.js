@@ -59,7 +59,7 @@ function helmJobRunner (config, h) {
         "cd /src/",
         "git clone https://github.com/chzbrgr71/rating-charts.git",
         "cd rating-charts",
-        `helm upgrade --install --reuse-values rating-api ./rating-api --set api.imageTag=${config.get("imageTag")}`
+        `helm upgrade --install --reuse-values rating-api ./rating-api --set api.image=${config.get("acrServer")}/${config.get("apiImage")} --set api.imageTag=${config.get("imageTag")}`
     ]
 }
 
