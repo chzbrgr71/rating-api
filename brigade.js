@@ -54,7 +54,7 @@ function acrJobRunner(config, acr) {
 
 function helmJobRunner (config, h) {
     h.storage.enabled = false
-    h.image = "briaracreu.azurecr.io/chzbrgr71/k8s-helm:v2.8.2"
+    h.image = "chzbrgr71/k8s-helm:v2.7.2"
     h.tasks = [
         "cd /src/",
         "git clone https://github.com/chzbrgr71/rating-charts.git",
