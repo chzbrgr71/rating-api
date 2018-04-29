@@ -47,7 +47,7 @@ function acrJobRunner(config, acr) {
     acr.tasks = [
         "cd /src/",
         `az login --service-principal -u ${config.get("azServicePrincipal")} -p ${config.get("azClientSecret")} --tenant ${config.get("azTenant")}`,
-        `az acr build -t ${config.get("acrImage")} --build-arg IMAGE_TAG_REF=${imageTag} -f ./Dockerfile --context . -r ${acrName}`
+        `az acr build -t ${config.get("acrImage")} --build-arg IMAGE_TAG_REF=${config.get("imageTag")} -f ./Dockerfile --context . -r ${config.get("acrUsername")}`
     ]
 }
 
