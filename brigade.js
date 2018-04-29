@@ -7,30 +7,29 @@ events.on("push", (brigadeEvent, project) => {
     var brigConfig = new Map()
     brigConfig.set("acrServer", project.secrets.acrServer)
     brigConfig.set("acrUsername", project.secrets.acrUsername)
-    brigConfig.set("acrPassword", project.secrets.acrPassword)
-    brigConfig.set("apiImage", "chzbrgr71/rating-api")
+    brigConfig.set("azServicePrincipal", project.secrets.azServicePrincipal)
+    brigConfig.set("azClientSecret", project.secrets.azClientSecret)
+    brigConfig.set("azTenant", project.secrets.azTenant)
     brigConfig.set("gitSHA", brigadeEvent.revision.commit.substr(0,7))
     brigConfig.set("eventType", brigadeEvent.type)
     brigConfig.set("branch", getBranch(gitPayload))
-    var today = new Date()
-    brigConfig.set("buildDate", today.toISOString().substring(0, 10))
+    brigConfig.set("apiImage", "chzbrgr71/rating-api")
     brigConfig.set("imageTag", `${brigConfig.get("branch")}-${brigConfig.get("gitSHA")}`)
-    brigConfig.set("apiACRImage", `${brigConfig.get("acrServer")}/${brigConfig.get("apiImage")}`)
-    
-    console.log(`==> gitHub webook (${brigConfig.get("branch")}) with commit ID ${brigConfig.get("gitSHA")}`)
-    console.log(`==> Date ${brigConfig.get("buildDate")}`)
+    brigConfig.set("acrImage", `${brigConfig.get("apiImage")}:${brigConfig.get("imageTag")}`)
 
+    console.log(`==> gitHub webook (${brigConfig.get("branch")}) with commit ID ${brigConfig.get("gitSHA")}`)
+    
     // setup brigade jobs
-    var docker = new Job("job-runner-docker")
+    var acrbuilder = new Job("job-runner-acr-builder")
     var helm = new Job("job-runner-helm")
-    dockerJobRunner(brigConfig, docker)
-    helmJobRunner(brigConfig, helm, "prod")
+    acrJobRunner(brigConfig, acrbuilder)
+    helmJobRunner(brigConfig, helm)
     
     // start pipeline
-    console.log(`==> starting pipeline for docker image: ${brigConfig.get("apiACRImage")}:${brigConfig.get("imageTag")}`)
+    console.log(`==> starting pipeline for docker image: ${brigConfig.get("apiImage")}:${brigConfig.get("imageTag")}`)
     var pipeline = new Group()
     pipeline.add(docker)
-    pipeline.add(helm)
+    //pipeline.add(helm)
     if (brigConfig.get("branch") == "master") {
         pipeline.runEach()
     } else {
@@ -39,37 +38,20 @@ events.on("push", (brigadeEvent, project) => {
 })
 
 events.on("after", (event, proj) => {
-    console.log("brigade pipeline finished successfully")
-
-    var slack = new Job("slack-notify", "technosophos/slack-notify:latest", ["/slack-notify"])
-    slack.storage.enabled = false
-    slack.env = {
-      SLACK_WEBHOOK: proj.secrets.slackWebhook,
-      SLACK_USERNAME: "brigade-demo",
-      SLACK_MESSAGE: "brigade pipeline finished. heroes API updated",
-      SLACK_COLOR: "#ff0000"
-    }
-	slack.run()
-    
+    console.log("brigade pipeline finished successfully")    
 })
 
-function dockerJobRunner(config, d) {
-    d.storage.enabled = false
-    d.image = "chzbrgr71/dockernd:node"
-    d.privileged = true
-    d.tasks = [
-        "dockerd-entrypoint.sh &",
-        "echo waiting && sleep 20",
+function acrJobRunner(config, acr) {
+    acr.storage.enabled = false
+    acr.image = "briaracreu.azurecr.io/chzbrgr71/azure-cli:0.0.5"
+    acr.tasks = [
         "cd /src/",
-        `docker login ${config.get("acrServer")} -u ${config.get("acrUsername")} -p ${config.get("acrPassword")}`,
-        `docker build --build-arg BUILD_DATE=${config.get("buildDate")} --build-arg IMAGE_TAG_REF=${config.get("imageTag")} --build-arg VCS_REF=${config.get("gitSHA")} -t ${config.get("apiImage")} .`,
-        `docker tag ${config.get("apiImage")} ${config.get("apiACRImage")}:${config.get("imageTag")}`,
-        `docker push ${config.get("apiACRImage")}:${config.get("imageTag")}`,
-        "killall dockerd"
+        `az login --service-principal -u ${config.get("azServicePrincipal")} -p ${config.get("azClientSecret")} --tenant ${config.get("azTenant")}`,
+        `az acr build -t ${config.get("acrImage")} --build-arg IMAGE_TAG_REF=${imageTag} -f ./Dockerfile --context . -r ${acrName}`
     ]
 }
 
-function helmJobRunner (config, h, deployType) {
+function helmJobRunner (config, h) {
     h.storage.enabled = false
     h.image = "chzbrgr71/k8s-helm:v2.7.2"
     h.tasks = [
