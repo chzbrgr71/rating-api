@@ -28,8 +28,9 @@ events.on("push", (brigadeEvent, project) => {
     // start pipeline
     console.log(`==> starting pipeline for docker image: ${brigConfig.get("apiImage")}:${brigConfig.get("imageTag")}`)
     var pipeline = new Group()
-    pipeline.add(docker)
+    pipeline.add(acrbuilder)
     //pipeline.add(helm)
+    
     if (brigConfig.get("branch") == "master") {
         pipeline.runEach()
     } else {
