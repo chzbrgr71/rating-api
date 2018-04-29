@@ -29,7 +29,7 @@ events.on("push", (brigadeEvent, project) => {
     console.log(`==> starting pipeline for docker image: ${brigConfig.get("apiImage")}:${brigConfig.get("imageTag")}`)
     var pipeline = new Group()
     pipeline.add(acrbuilder)
-    //pipeline.add(helm)
+    pipeline.add(helm)
     
     if (brigConfig.get("branch") == "master") {
         pipeline.runEach()
@@ -54,12 +54,12 @@ function acrJobRunner(config, acr) {
 
 function helmJobRunner (config, h) {
     h.storage.enabled = false
-    h.image = "chzbrgr71/k8s-helm:v2.7.2"
+    h.image = "briaracreu.azurecr.io/chzbrgr71/k8s-helm:v2.8.2"
     h.tasks = [
         "cd /src/",
         "git clone https://github.com/chzbrgr71/rating-charts.git",
         "cd rating-charts",
-        `helm upgrade --install rating-api ./rating-api --set api.image=${config.get("apiACRImage")} --set api.imageTag=${config.get("imageTag")}`
+        `helm upgrade --install --reuse-values rating-api ./rating-api --set api.imageTag=${config.get("imageTag")}`
     ]
 }
 
