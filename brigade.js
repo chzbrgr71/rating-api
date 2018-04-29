@@ -6,7 +6,7 @@ events.on("push", (brigadeEvent, project) => {
     var gitPayload = JSON.parse(brigadeEvent.payload)
     var brigConfig = new Map()
     brigConfig.set("acrServer", project.secrets.acrServer)
-    brigConfig.set("acrUsername", project.secrets.acrUsername)
+    brigConfig.set("acrName", project.secrets.acrName)
     brigConfig.set("azServicePrincipal", project.secrets.azServicePrincipal)
     brigConfig.set("azClientSecret", project.secrets.azClientSecret)
     brigConfig.set("azTenant", project.secrets.azTenant)
@@ -48,7 +48,7 @@ function acrJobRunner(config, acr) {
     acr.tasks = [
         "cd /src/",
         `az login --service-principal -u ${config.get("azServicePrincipal")} -p ${config.get("azClientSecret")} --tenant ${config.get("azTenant")}`,
-        `az acr build -t ${config.get("acrImage")} --build-arg IMAGE_TAG_REF=${config.get("imageTag")} -f ./Dockerfile --context . -r ${config.get("acrUsername")}`
+        `az acr build -t ${config.get("acrImage")} --build-arg IMAGE_TAG_REF=${config.get("imageTag")} -f ./Dockerfile --context . -r ${config.get("acrName")}`
     ]
 }
 
